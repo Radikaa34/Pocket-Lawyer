@@ -1,0 +1,26 @@
+import { Router } from 'express';
+import multer from 'multer';
+import path from 'node:path';
+import fs from 'node:fs';
+import { asyncHandler } from '../middleware/errorMiddleware.js';
+import { authMiddleware, adminMiddleware } from '../middleware/authMiddleware.js';
+import * as auth from '../controllers/authController.js';
+import * as topics from '../controllers/topicController.js';
+import * as activity from '../controllers/activityController.js';
+import * as users from '../controllers/userController.js';
+import * as docs from '../controllers/documentController.js';
+import * as questions from '../controllers/documentQuestionController.js';
+import * as admin from '../controllers/adminController.js';
+
+const router = Router();
+const uploadDir = path.resolve('server/uploads'); fs.mkdirSync(uploadDir, { recursive: true });
+const upload = multer({ dest: uploadDir, limits: { fileSize: 10 * 1024 * 1024 } });
+router.post('/auth/register', asyncHandler(auth.register)); router.post('/auth/login', asyncHandler(auth.login)); router.get('/auth/me', authMiddleware, asyncHandler(auth.me));
+router.get('/topics', asyncHandler(topics.listTopics)); router.get('/topics/:id', asyncHandler(topics.getTopic)); router.get('/search', asyncHandler(topics.searchTopics));
+router.get('/bookmarks', authMiddleware, asyncHandler(activity.listBookmarks)); router.post('/bookmarks', authMiddleware, asyncHandler(activity.addBookmark)); router.delete('/bookmarks/:topicId', authMiddleware, asyncHandler(activity.removeBookmark));
+router.get('/history', authMiddleware, asyncHandler(activity.listHistory)); router.post('/history', authMiddleware, asyncHandler(activity.addHistory)); router.delete('/history/:id', authMiddleware, asyncHandler(activity.removeHistory));
+router.get('/dashboard', authMiddleware, asyncHandler(activity.dashboardStats)); router.get('/users/profile', authMiddleware, asyncHandler(users.getProfile)); router.put('/users/profile', authMiddleware, asyncHandler(users.updateProfile));
+router.post('/documents/upload', authMiddleware, upload.single('document'), asyncHandler(docs.uploadDocument)); router.get('/documents', authMiddleware, asyncHandler(docs.listDocuments)); router.get('/documents/:id', authMiddleware, asyncHandler(docs.getDocument)); router.delete('/documents/:id', authMiddleware, asyncHandler(docs.deleteDocument));
+router.get('/documents/:id/questions', authMiddleware, asyncHandler(questions.listQuestions)); router.post('/documents/:id/questions', authMiddleware, asyncHandler(questions.askQuestion));
+router.get('/admin/stats', authMiddleware, adminMiddleware, asyncHandler(admin.stats)); router.get('/admin/users', authMiddleware, adminMiddleware, asyncHandler(admin.listUsers)); router.post('/admin/topics', authMiddleware, adminMiddleware, asyncHandler(topics.createTopic)); router.put('/admin/topics/:id', authMiddleware, adminMiddleware, asyncHandler(topics.updateTopic)); router.delete('/admin/topics/:id', authMiddleware, adminMiddleware, asyncHandler(topics.deleteTopic));
+export default router;

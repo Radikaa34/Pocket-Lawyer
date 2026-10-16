@@ -1,0 +1,2 @@
+export function getProfile(req, res) { res.json({ user: req.user.safe() }); }
+export async function updateProfile(req, res) { const allowed = {}; if (typeof req.body.name === 'string' && req.body.name.trim().length >= 2) allowed.name = req.body.name.trim(); if (!Object.keys(allowed).length) return res.status(400).json({ message: 'Provide a valid name.' }); Object.assign(req.user, allowed); await req.user.save(); res.json({ user: req.user.safe() }); }

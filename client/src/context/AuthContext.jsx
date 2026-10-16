@@ -1,0 +1,5 @@
+import { createContext, useContext, useEffect, useState } from 'react';
+import { api, getToken, setToken } from '@/services/api';
+const AuthContext = createContext(null);
+export function AuthProvider({ children }) { const [user, setUser] = useState(null); const [loading, setLoading] = useState(Boolean(getToken())); useEffect(() => { if (!getToken()) return setLoading(false); api.get('/auth/me').then((data) => setUser(data.user)).catch(() => setToken(null)).finally(() => setLoading(false)); }, []); const login = async (values) => { const data = await api.post('/auth/login', values); setToken(data.token); setUser(data.user); return data.user; }; const register = async (values) => { const data = await api.post('/auth/register', values); setToken(data.token); setUser(data.user); return data.user; }; const logout = () => { setToken(null); setUser(null); }; return <AuthContext.Provider value={{ user, loading, isAuthenticated: Boolean(user), login, register, logout, refresh: () => api.get('/auth/me').then((data) => setUser(data.user)) }}>{children}</AuthContext.Provider>; }
+export function useAuth() { return useContext(AuthContext); }
